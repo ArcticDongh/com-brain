@@ -47,6 +47,10 @@ namespace FW
             {
                 Debug.LogWarning(string.Format("已有节点时注册对象可能破坏数据结构。新增对象: %s", obj.ToString()));
             }
+            if (managed.Contains(obj))
+            {
+                Debug.LogWarning(string.Format("发生重复注册，这通常不应出现。对象: %s", obj.ToString()));
+            }
             managed.Add(obj);
         }
 

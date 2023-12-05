@@ -6,12 +6,22 @@ namespace FW
 {
     public class Path2D
     {
+        // path节点的数据结构（未实装！）
+        public class Path2DNode
+        {
+            public Vector2 point;
+            public float faceing_direction;
+            public float stay_time;
+            public bool do_look_around;
+        }
+
         private Vector2[] points;   // 路径中的各个点
         private float[] faceing_directions; // 在各个点的朝向，不一定使用
         private int size;
         private bool is_circulated; // 是否循环。默认循环
 
         public bool IsCirculated { get { return is_circulated; } set { is_circulated = value; } }
+        public int Size { get { return size; } }
 
         public Path2D(int size)
         {
@@ -62,6 +72,19 @@ namespace FW
             else
             {
                 this.points[index] = point;
+            }
+        }
+
+        public void DebugDraw()
+        {
+            if (points is null) return;
+            var last = points[0];
+            
+            for (int i = 1; i <= points.Length; i++)
+            {
+                var cur = points[i % points.Length];
+                Debug.DrawLine(last, cur, Color.magenta);
+                last = cur;
             }
         }
     }

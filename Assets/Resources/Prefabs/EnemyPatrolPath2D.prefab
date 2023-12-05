@@ -1,0 +1,102 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1001 &8138307029198187281
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 6785655080850680944, guid: eaa0449c04eeece4cbc7d8f3e33b3e59, type: 3}
+      propertyPath: m_RootOrder
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6785655080850680944, guid: eaa0449c04eeece4cbc7d8f3e33b3e59, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6785655080850680944, guid: eaa0449c04eeece4cbc7d8f3e33b3e59, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6785655080850680944, guid: eaa0449c04eeece4cbc7d8f3e33b3e59, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6785655080850680944, guid: eaa0449c04eeece4cbc7d8f3e33b3e59, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6785655080850680944, guid: eaa0449c04eeece4cbc7d8f3e33b3e59, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6785655080850680944, guid: eaa0449c04eeece4cbc7d8f3e33b3e59, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6785655080850680944, guid: eaa0449c04eeece4cbc7d8f3e33b3e59, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: -0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6785655080850680944, guid: eaa0449c04eeece4cbc7d8f3e33b3e59, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6785655080850680944, guid: eaa0449c04eeece4cbc7d8f3e33b3e59, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6785655080850680944, guid: eaa0449c04eeece4cbc7d8f3e33b3e59, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6785655080850680948, guid: eaa0449c04eeece4cbc7d8f3e33b3e59, type: 3}
+      propertyPath: m_Name
+      value: EnemyPatrolPath2D
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 6785655080850680945, guid: eaa0449c04eeece4cbc7d8f3e33b3e59, type: 3}
+  m_SourcePrefab: {fileID: 100100000, guid: eaa0449c04eeece4cbc7d8f3e33b3e59, type: 3}
+--- !u!1 &3376132124242472439 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6785655081819555558, guid: eaa0449c04eeece4cbc7d8f3e33b3e59, type: 3}
+  m_PrefabInstance: {fileID: 8138307029198187281}
+  m_PrefabAsset: {fileID: 0}
+--- !u!212 &3376132125170564635 stripped
+SpriteRenderer:
+  m_CorrespondingSourceObject: {fileID: 6785655081011205386, guid: eaa0449c04eeece4cbc7d8f3e33b3e59, type: 3}
+  m_PrefabInstance: {fileID: 8138307029198187281}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1 &3376132125278455653 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 6785655080850680948, guid: eaa0449c04eeece4cbc7d8f3e33b3e59, type: 3}
+  m_PrefabInstance: {fileID: 8138307029198187281}
+  m_PrefabAsset: {fileID: 0}
+--- !u!114 &7158431435119367708
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3376132125278455653}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49449a96f1b1a1448a1c2aa1ebd86156, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sight_range: 4.8
+  sight_angle: 30
+  acceleration: 0.45
+  sticky_rate: 0.9
+  speed: 3
+  searching_speed: 1
+  chasing_speed: 5
+  ai_sight_stagesize: 60
+  rotate_speed: 75
+  searching_rotate_speed: 75
+  chasing_rotate_speed: 200
+  sprite_ref: {fileID: 3376132125170564635}
+  sight_visual_ref: {fileID: 3376132124242472439}
+  path_node_close_enough_length: 0.05
+  patrol_speed: 2
