@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Rendering.Universal;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerControl : UniqueMono<PlayerControl>
@@ -9,11 +10,11 @@ public class PlayerControl : UniqueMono<PlayerControl>
     public float acceleration = 0.45f;
     public float sticky_rate = 0.9f;
     public float sight_range = 6.4f;
-
+    public float speed = 0.2f;
     private bool debug_show = true;
     public bool DebugShow { get { return debug_show; } }
     private Rigidbody2D rb;
-
+    private Light2D playerSight;
     public UnityEvent trigger_weapon_primary;
     public UnityEvent trigger_weapon_secondary;
 
@@ -21,22 +22,23 @@ public class PlayerControl : UniqueMono<PlayerControl>
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
+        playerSight = transform.Find("Sight").GetComponent<Light2D>();
     }
 
     // Update is called once per frame
     void Update()
     {
-        // ÖØ¿ª³¡¾°£¬²âÊÔÓÃ
+        // é‡å¼€åœºæ™¯ï¼Œæµ‹è¯•ç”¨
         if (Input.GetKeyDown(KeyCode.R))
         {
             UnityEngine.SceneManagement.SceneManager.LoadScene(0);
         }
     }
 
-    // ÎïÀíÖ¡
+    // ç‰©ç†å¸§
     private void FixedUpdate()
     {
-        // Ê±¼äÁ÷ËÙ¿ØÖÆ
+        // æ—¶é—´æµé€Ÿæ§åˆ¶
         float ts = -1f;
         if (Input.GetKey(KeyCode.Alpha1))
         {
@@ -61,21 +63,26 @@ public class PlayerControl : UniqueMono<PlayerControl>
         }
 
         var direction = GetInputAxis();
-        rb.velocity *= sticky_rate;
+
         
         if (direction.magnitude > 1)
         {
-            direction.Normalize();  // ·ÀÖ¹Ğ±Ïò¼ÓËÙÒÆ¶¯
+            direction.Normalize();  // é˜²æ­¢æ–œå‘åŠ é€Ÿç§»åŠ¨
         }
 
+        /*
+        rb.velocity *= sticky_rate;
         rb.velocity += direction * acceleration;
+        */
 
-        // ×ªÏòµ½Êó±êÎ»ÖÃ£¬³¯ÏòÒÔÉÏ·½ÏòÎª×¼£¨Vector2.UP£©
+        rb.velocity = direction* speed;//å°è¯•æ”¾å¼ƒåŠ é€Ÿåº¦ï¼Œæ›´å¥½æ§åˆ¶
+        rb.velocity *= sticky_rate;
+        // è½¬å‘åˆ°é¼ æ ‡ä½ç½®ï¼Œæœå‘ä»¥ä¸Šæ–¹å‘ä¸ºå‡†ï¼ˆVector2.UPï¼‰
         var delta = FW.Utilities.GetMouseWorldCoordinate() - transform.position;
         transform.rotation = Quaternion.Euler(new Vector3(0, 0, Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg - 90));
 
-        // ´¥·¢ÎäÆ÷
-        // °´×¡Ê±ÓĞĞ§£¬µÍÖ¡ÂÊÊ±¿ÉÄÜÔì³ÉÊäÈëÎÊÌâ¡£
+        // è§¦å‘æ­¦å™¨
+        // æŒ‰ä½æ—¶æœ‰æ•ˆï¼Œä½å¸§ç‡æ—¶å¯èƒ½é€ æˆè¾“å…¥é—®é¢˜ã€‚
         if (Input.GetMouseButton(FW.Utilities.MOUSE_BUTTON_LEFT))
         {
             trigger_weapon_primary.Invoke();
@@ -85,13 +92,16 @@ public class PlayerControl : UniqueMono<PlayerControl>
             trigger_weapon_secondary.Invoke();
         }
 
-        // ´¦ÀíÊÓÏß
+        // å¤„ç†è§†çº¿
         ProcessSight();
     }
-    // ´¦ÀíÊÓÏß£¬¼ì²éÃ¿Ò»¸öµĞÈË£¨µĞÈËÊ¹ÓÃ¾²Ì¬±äÁ¿Enemies´æÖü£¬³õÊ¼»¯Ê±×Ô¶¯×¢²á£©
-    // ÈôµĞÈËÔÚ×ÔÉíÊÓÒ°·¶Î§ÄÚ²¢ÇÒÉäÏß¼ì²âÂ·¾¶ÉÏÃ»ÓĞterrain£¨Ç½±ÚµÈ£©£¬ÔòÊÓ×÷Íæ¼Ò·¢ÏÖÁË¸ÃµĞÈË£¬ÏÔÊ¾¸ÃµĞÈË¡£
+    // å¤„ç†è§†çº¿ï¼Œæ£€æŸ¥æ¯ä¸€ä¸ªæ•Œäººï¼ˆæ•Œäººä½¿ç”¨é™æ€å˜é‡Enemieså­˜è´®ï¼Œåˆå§‹åŒ–æ—¶è‡ªåŠ¨æ³¨å†Œï¼‰
+    // è‹¥æ•Œäººåœ¨è‡ªèº«è§†é‡èŒƒå›´å†…å¹¶ä¸”å°„çº¿æ£€æµ‹è·¯å¾„ä¸Šæ²¡æœ‰terrainï¼ˆå¢™å£ç­‰ï¼‰ï¼Œåˆ™è§†ä½œç©å®¶å‘ç°äº†è¯¥æ•Œäººï¼Œæ˜¾ç¤ºè¯¥æ•Œäººã€‚
     private void ProcessSight()
     {
+        //ä¿®æ”¹ç©å®¶è§†é‡èŒƒå›´
+        playerSight.pointLightInnerRadius = sight_range / 2;
+        playerSight.pointLightOuterRadius = sight_range;
         foreach (var enemy in EnemyBase.Enemies)
         {
             var delta = enemy.transform.position - transform.position;

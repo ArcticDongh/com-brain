@@ -11,8 +11,15 @@ public class EnemyBase : MonoBehaviour
     public float sight_angle = 30f;
     public float acceleration = 0.45f;
     public float sticky_rate = 0.9f;
+    public float speed = 3f;
+
+    public float searching_speed = 1f;//搜查时速度
+    public float chasing_speed = 5f//追击时速度
+        ;
     public int ai_sight_stagesize = 60;
     public float rotate_speed = 2f;
+    public float searching_rotate_speed = 75f;//搜查时旋转速度
+    public float chasing_rotate_speed = 200f;//追击时旋转速度
     public SpriteRenderer sprite_ref;
     public GameObject sight_visual_ref;
 
@@ -67,28 +74,34 @@ public class EnemyBase : MonoBehaviour
         // IsSeePlayer();
 
         // 移动
-        rb.velocity *= sticky_rate;
+
         var direction = ai_move_direction;
         if (direction.magnitude > 1) direction = ai_move_direction.normalized;
-        rb.velocity += direction * acceleration;
-
+        //        rb.velocity += direction * acceleration;
+        //尝试直接改变速度
+        rb.velocity = direction * speed;
+        rb.velocity *= sticky_rate;
         // 旋转
-        var rdelta = ((ai_face_degree - rb.rotation + 180) % 360) - 180;
+        var rdelta = ShakeFix(((ai_face_degree - rb.rotation + 180) % 360) - 180);
         /*if (Mathf.Abs(rdelta) <= rotate_speed)
         {
             rb.angularVelocity = 0;
             rb.SetRotation(ai_face_degree);
         }
         else */
-        if (rdelta >= 0)
+        if (rdelta > 0.1f)//这里也做了防抖处理，但是写死了
         {
             // rb.SetRotation(rb.rotation + rotate_speed);
             rb.angularVelocity = rotate_speed;
         }
-        else
+        else if(rdelta<-0.1f)
         {
             // rb.SetRotation(rb.rotation - rotate_speed);
             rb.angularVelocity = -rotate_speed;
+        }
+        else
+        {
+            rb.angularVelocity = 0;
         }
     }
 
@@ -130,7 +143,15 @@ public class EnemyBase : MonoBehaviour
 
     private void AIBehaviorModeSuspect()
     {
-        ai_move_direction = (ai_last_spot - (Vector2)transform.position).normalized;
+        speed = searching_speed;
+        rotate_speed = searching_rotate_speed;
+        ai_move_direction = ShakeFix((ai_last_spot - (Vector2)transform.position)).normalized;
+    }
+    private void AIBehaviorModeAlarm()
+    {
+        speed = chasing_speed;
+        rotate_speed = chasing_rotate_speed;
+        ai_move_direction = ShakeFix((ai_last_spot - (Vector2)transform.position)).normalized;
     }
     // AI行为应当写在这里
     private void AIBehavior()
@@ -150,7 +171,7 @@ public class EnemyBase : MonoBehaviour
                 AIBehaviorModeSuspect();
                 break;
             case AIMode.ALARM:
-                AIBehaviorModeSuspect();
+                AIBehaviorModeAlarm();
                 break;
             default:
                 Debug.LogError("未定义的AIMode：" + ai_mode.ToString());
@@ -248,5 +269,22 @@ public class EnemyBase : MonoBehaviour
         hide_behind_wall_ref.SetActive(visible);
 
         enemy_info.SetActive(visible);
+    }
+
+    public Vector2 ShakeFix(Vector2 rawVec)//防抖
+    {
+        if(rawVec.magnitude<0.1f)
+        {
+            return Vector2.zero;
+        }
+        return rawVec;
+    }
+    public float ShakeFix(float rawFloat)//防抖
+    {
+        if (Mathf.Abs(rawFloat) < 5)
+        {
+            return 0;
+        }
+        return rawFloat;
     }
 }
