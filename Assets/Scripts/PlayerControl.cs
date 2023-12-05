@@ -31,6 +31,7 @@ public class PlayerControl : UniqueMono<PlayerControl>
         // 重开场景，测试用
         if (Input.GetKeyDown(KeyCode.R))
         {
+            FW.TimelineManager.Reset();
             UnityEngine.SceneManagement.SceneManager.LoadScene(0);
         }
     }

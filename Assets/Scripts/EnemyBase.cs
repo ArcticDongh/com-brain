@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class EnemyBase : MonoBehaviour
+public class EnemyBase : MonoBehaviour, FW.ISerializable
 {
     public enum AIMode { IDLE, PATROL, SUSPECT, ALARM, DISABLED, PRESERVED1, PRESERVED2, PRESERVED3 };
 
@@ -13,36 +13,37 @@ public class EnemyBase : MonoBehaviour
     public float sticky_rate = 0.9f;
     public float speed = 3f;
 
-    public float searching_speed = 1f;//搜查时速度
-    public float chasing_speed = 5f//追击时速度
-        ;
+    public float searching_speed = 1f;  //搜查时速度
+    public float chasing_speed = 5f;    //追击时速度
+    
     public int ai_sight_stagesize = 60;
-    public float rotate_speed = 2f;
+    public float rotate_speed = 75f;
     public float searching_rotate_speed = 75f;//搜查时旋转速度
     public float chasing_rotate_speed = 200f;//追击时旋转速度
     public SpriteRenderer sprite_ref;
     public GameObject sight_visual_ref;
 
-    private AIMode ai_mode;
-    private bool is_alive = true;
-    private int ai_sight_progress = 0;
-    private Vector2 ai_last_spot;
-    private Vector2 ai_move_direction;
-    private float ai_face_degree;   // AI控制的目标朝向（rotation）
-    private Rigidbody2D rb;
-    private ParticleSystem particle_blood_ref;  // 死亡时的粒子效果，目前通过在子物体中寻找ParticleSystem获得。
-    private GameObject hide_behind_wall_ref;
-    private EnemyInfo enemy_info;
+    protected AIMode ai_mode;
+    protected bool is_alive = true;
+    protected int ai_sight_progress = 0;
+    protected Vector2 ai_last_spot;
+    protected Vector2 ai_move_direction;
+    protected float ai_face_degree;   // AI控制的目标朝向（rotation）
+    protected Rigidbody2D rb;
+    protected ParticleSystem particle_blood_ref;  // 死亡时的粒子效果，目前通过在子物体中寻找ParticleSystem获得。
+    protected GameObject hide_behind_wall_ref;
+    protected EnemyInfo enemy_info;
 
-    private static List<EnemyBase> enemies = new();
+    protected static List<EnemyBase> enemies = new();
     public static List<EnemyBase> Enemies { get { return enemies; } }
 
-    private void Awake()
+    protected virtual void Awake()
     {
         enemies.Add(this);
+        FW.TimelineManager.Register(this);
     }
     // Start is called before the first frame update
-    void Start()
+    protected virtual void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         particle_blood_ref = GetComponentInChildren<ParticleSystem>();
@@ -81,8 +82,10 @@ public class EnemyBase : MonoBehaviour
         //尝试直接改变速度
         rb.velocity = direction * speed;
         rb.velocity *= sticky_rate;
-        // 旋转
-        var rdelta = ShakeFix(((ai_face_degree - rb.rotation + 180) % 360) - 180);
+        // 旋转  乱转圈bug修好了
+        // rb.rotation 计量重复圈数。
+        var rdelta = ShakeFix(((ai_face_degree - transform.rotation.eulerAngles.z + 900) % 360) - 180); // 内有魔法数字，你不需要知道为什么，只要能运行就好了。
+        Debug.Log(rdelta);
         /*if (Mathf.Abs(rdelta) <= rotate_speed)
         {
             rb.angularVelocity = 0;
@@ -111,7 +114,7 @@ public class EnemyBase : MonoBehaviour
         
     }
 
-    private void AIBehaviorSight()
+    protected void AIBehaviorSight()
     {
         if (!IsSeePlayer()) return;
 
@@ -119,7 +122,7 @@ public class EnemyBase : MonoBehaviour
         ai_sight_progress = Mathf.Min(ai_sight_progress + 1, ai_sight_stagesize);
 
         var delta = ai_last_spot - (Vector2)transform.position;
-        ai_face_degree = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg - 90;
+        ai_face_degree = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg - 90;    // 实体默认朝上，与默认方向右有90°的相位差。
 
         if (ai_sight_progress < ai_sight_stagesize) return;
         // 警戒等级提升
@@ -136,18 +139,18 @@ public class EnemyBase : MonoBehaviour
         
     }
 
-    private void AIBehaviorModeIdle()
+    protected virtual void AIBehaviorModeIdle()
     {
         ai_move_direction = Vector2.zero;
     }
 
-    private void AIBehaviorModeSuspect()
+    protected virtual void AIBehaviorModeSuspect()
     {
         speed = searching_speed;
         rotate_speed = searching_rotate_speed;
         ai_move_direction = ShakeFix((ai_last_spot - (Vector2)transform.position)).normalized;
     }
-    private void AIBehaviorModeAlarm()
+    protected virtual void AIBehaviorModeAlarm()
     {
         speed = chasing_speed;
         rotate_speed = chasing_rotate_speed;
@@ -195,7 +198,7 @@ public class EnemyBase : MonoBehaviour
         OnKilled();
     }
 
-    private void OnKilled()
+    protected virtual void OnKilled()
     {
         if (!is_alive)
         {
@@ -286,5 +289,16 @@ public class EnemyBase : MonoBehaviour
             return 0;
         }
         return rawFloat;
+    }
+    // 接口函数。
+    // 通常子类需要重写这两个函数以适配新增属性。
+    public virtual Object Serialize()
+    {
+        throw new System.NotImplementedException();
+    }
+
+    public virtual void Deserialize(Object saved_data)
+    {
+        throw new System.NotImplementedException();
     }
 }
