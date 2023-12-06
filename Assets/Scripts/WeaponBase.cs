@@ -7,6 +7,7 @@ public class WeaponBase : MonoBehaviour
     public float cooldown_time = 0.6f;
     public int lasting_tick = 3;
     public GameObject weapon_appearance;
+    public WeaponInfoUI infoUI;
 
     // 计时器，你不应该在计时之外修改这些值。
     private float timer_cooldown = 0f;
@@ -21,10 +22,13 @@ public class WeaponBase : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if (infoUI is not null)
+        {
+            infoUI.SetCooldownProgress2(timer_cooldown, cooldown_time);
+        }
     }
     // 物理帧
-    private void FixedUpdate()
+    protected virtual void FixedUpdate()
     {
         // 武器持续时间计时，计时结束时禁用武器。
         if (timer_lasting > 0)

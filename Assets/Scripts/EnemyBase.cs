@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Rendering.Universal;
 
 [RequireComponent(typeof(Rigidbody2D))]
 public class EnemyBase : MonoBehaviour, FW.ISerializable
@@ -16,7 +17,7 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
     public float searching_speed = 1f;  //搜查时速度
     public float chasing_speed = 5f;    //追击时速度
     
-    public int ai_sight_stagesize = 60;
+    public float ai_sight_stagesize = 60f;
     public float rotate_speed = 75f;
     public float searching_rotate_speed = 75f;//搜查时旋转速度
     public float chasing_rotate_speed = 200f;//追击时旋转速度
@@ -25,7 +26,7 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
 
     protected AIMode ai_mode;
     protected bool is_alive = true;
-    protected int ai_sight_progress = 0;
+    protected float ai_sight_progress = 0f;
     protected Vector2 ai_last_spot;
     protected Vector2 ai_move_direction;
     protected float ai_face_degree;   // AI控制的目标朝向（rotation）
@@ -36,6 +37,11 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
 
     protected static List<EnemyBase> enemies = new();
     public static List<EnemyBase> Enemies { get { return enemies; } }
+
+    private static readonly Color color_alarm = new(0.82f, 0, 0);
+    private static readonly Color color_suspect = new(0.4f, 0.34f, 0);
+    private static readonly Color color_common = new(0, 0.26f, 0.4f);
+
 
     protected virtual void Awake()
     {
@@ -59,6 +65,8 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
         // 创建UI信息
         enemy_info = CanvasEnemyInfo.Instance.CreateEnemyInfoInstance();
         enemy_info.SetTrack(transform);
+
+        AAIMode = AAIMode;
     }
 
     private void OnDestroy()
@@ -85,7 +93,7 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
         // 旋转  乱转圈bug修好了
         // rb.rotation 计量重复圈数。
         var rdelta = ShakeFix(((ai_face_degree - transform.rotation.eulerAngles.z + 900) % 360) - 180); // 内有魔法数字，你不需要知道为什么，只要能运行就好了。
-        Debug.Log(rdelta);
+        // Debug.Log(rdelta);
         /*if (Mathf.Abs(rdelta) <= rotate_speed)
         {
             rb.angularVelocity = 0;
@@ -114,9 +122,47 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
         
     }
 
+    protected AIMode AAIMode
+    {
+        get { return ai_mode; }
+        set
+        {
+            ai_mode = value;
+            if (value == AIMode.ALARM)
+            {
+                SetSightVisualColor(color_alarm);
+            }
+            else if (value == AIMode.SUSPECT)
+            {
+                SetSightVisualColor(color_suspect);
+            }
+            else if (value == AIMode.IDLE)
+            {
+                SetSightVisualColor(color_common);
+            }
+        }
+    }
+
     protected void AIBehaviorSight()
     {
-        if (!IsSeePlayer()) return;
+        if (!IsSeePlayer())
+        {
+            ai_sight_progress = Mathf.Max(ai_sight_progress - 0.3f, 0);
+            // 警戒等级降低
+            if (ai_sight_progress > 0) return;
+            if (AAIMode == AIMode.ALARM)
+            {
+                AAIMode = AIMode.SUSPECT;
+                ai_sight_progress = ai_sight_stagesize;
+            }
+            else if (AAIMode == AIMode.SUSPECT)
+            {
+                AAIMode = AIMode.IDLE;
+                ai_sight_progress = ai_sight_stagesize;
+            }
+
+            return;
+        }
 
         ai_last_spot = PlayerControl.Instance.transform.position;
         ai_sight_progress = Mathf.Min(ai_sight_progress + 1, ai_sight_stagesize);
@@ -126,14 +172,14 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
 
         if (ai_sight_progress < ai_sight_stagesize) return;
         // 警戒等级提升
-        if (ai_mode == AIMode.IDLE)
+        if (AAIMode == AIMode.IDLE)
         {
-            ai_mode = AIMode.SUSPECT;
+            AAIMode = AIMode.SUSPECT;
             ai_sight_progress = 0;
         }
-        else if (ai_mode == AIMode.SUSPECT)
+        else if (AAIMode == AIMode.SUSPECT)
         {
-            ai_mode = AIMode.ALARM;
+            AAIMode = AIMode.ALARM;
             ai_sight_progress = 0;
         }
         
@@ -188,7 +234,7 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
     private void ProcessSight()
     {
         // 提示状态
-        enemy_info.SightProgress = (float)ai_sight_progress / ai_sight_stagesize;
+        enemy_info.SightProgress = ai_sight_progress / ai_sight_stagesize;
 
         enemy_info.TextInfo = ai_mode.ToString();
     }
@@ -300,5 +346,13 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
     public virtual void Deserialize(Object saved_data)
     {
         throw new System.NotImplementedException();
+    }
+
+    public void SetSightVisualColor(Color color)
+    {
+        if (sight_visual_ref is null) return;
+        var light = sight_visual_ref.GetComponent<Light2D>();   // URP的Light2D
+        if (light is null) return;
+        light.color = color;
     }
 }
