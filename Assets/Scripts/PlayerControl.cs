@@ -34,6 +34,11 @@ public class PlayerControl : UniqueMono<PlayerControl>
             FW.TimelineManager.Reset();
             UnityEngine.SceneManagement.SceneManager.LoadScene(0);
         }
+
+        if (Input.GetKeyDown(KeyCode.F4))
+        {
+            Application.Quit();
+        }
     }
 
     // 物理帧
