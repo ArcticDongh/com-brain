@@ -10,13 +10,15 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
 
     public float sight_range = 4.8f;
     public float sight_angle = 30f;
-    public float acceleration = 0.45f;
+ //   public float acceleration = 0.45f;
     public float sticky_rate = 0.9f;
     public float speed = 3f;
 
     public float searching_speed = 1f;  //搜查时速度
     public float chasing_speed = 5f;    //追击时速度
-    
+
+    public float sight_progress_up_speed = 1.0f;//警戒值上升速度
+    public float sight_progress_down_speed = 0.3f;//警戒值下降速度
     public float ai_sight_stagesize = 60f;
     public float rotate_speed = 75f;
     public float searching_rotate_speed = 75f;//搜查时旋转速度
@@ -147,7 +149,7 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
     {
         if (!IsSeePlayer())
         {
-            ai_sight_progress = Mathf.Max(ai_sight_progress - 0.3f, 0);
+            ai_sight_progress = Mathf.Max(ai_sight_progress - sight_progress_down_speed, 0);
             // 警戒等级降低
             if (ai_sight_progress > 0) return;
             if (AAIMode == AIMode.ALARM)
@@ -163,11 +165,12 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
 
             return;
         }
-
+        //如果在视野范围内
         ai_last_spot = PlayerControl.Instance.transform.position;
-        ai_sight_progress = Mathf.Min(ai_sight_progress + 1, ai_sight_stagesize);
-
         var delta = ai_last_spot - (Vector2)transform.position;
+        sight_progress_up_speed = sight_range / Mathf.Abs(delta.magnitude);//距离越近警戒条进度越快
+        ai_sight_progress = Mathf.Min(ai_sight_progress + sight_progress_up_speed, ai_sight_stagesize);
+
         ai_face_degree = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg - 90;    // 实体默认朝上，与默认方向右有90°的相位差。
 
         if (ai_sight_progress < ai_sight_stagesize) return;
