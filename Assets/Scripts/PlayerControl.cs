@@ -129,6 +129,7 @@ public class PlayerControl : UniqueMono<PlayerControl>
             int first_collide_index = -1;
             for (int i = 0; i < ray_result.Length; i++)
             {
+                // Debug.Log("col");
                 // Debug.Log(ray_result[i].collider.name);
                 if (ray_result[i].collider is null) continue;   // 跳过空对象（应该不会有）
                 if (ignored_hideouts.Contains(ray_result[i].rigidbody)) continue;    // 跳过玩家所在的hideout
@@ -161,13 +162,15 @@ public class PlayerControl : UniqueMono<PlayerControl>
     // 这里使用rigidbody2d唯一指定草丛对象。
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        // Debug.Log("entering hideout:" + collision.name);
+        if (!collision.CompareTag("Hideout")) return;
+        Debug.Log("entering hideout:" + collision.name);
         ignored_hideouts.Add(collision.attachedRigidbody);
     }
 
     private void OnTriggerExit2D(Collider2D collision)
     {
-        // Debug.Log("exiting hideout:" + collision.name);
+        if (!collision.CompareTag("Hideout")) return;
+        Debug.Log("exiting hideout:" + collision.name);
         ignored_hideouts.Remove(collision.attachedRigidbody);
     }
     // 尝试在当前transform下创建武器对象，返回是否成功。

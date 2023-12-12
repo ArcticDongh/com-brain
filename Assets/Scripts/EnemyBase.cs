@@ -69,6 +69,7 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
         enemy_info.SetTrack(transform);
 
         AAIMode = AAIMode;
+        SetSightVisualAngle(sight_angle * 2);
     }
 
     private void OnDestroy()
@@ -359,5 +360,15 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
         var light = sight_visual_ref.GetComponent<Light2D>();   // URP的Light2D
         if (light is null) return;
         light.color = color;
+    }
+
+    public void SetSightVisualAngle(float angle)
+    {
+        if (sight_visual_ref is null) return;
+        var light = sight_visual_ref.GetComponent<Light2D>();   // URP的Light2D
+        if (light is null) return;
+        light.pointLightOuterAngle = angle;
+        light.pointLightInnerAngle = angle;
+        light.pointLightOuterAngle = angle;     // 三次赋值，防止可能的数值clamp
     }
 }

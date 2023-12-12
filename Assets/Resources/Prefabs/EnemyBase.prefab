@@ -119,11 +119,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   sight_range: 4.8
-  sight_angle: 30
-  acceleration: 0.45
+  sight_angle: 45
   sticky_rate: 0.9
+  speed: 3
+  searching_speed: 1
+  chasing_speed: 5
+  sight_progress_up_speed: 1
+  sight_progress_down_speed: 0.3
   ai_sight_stagesize: 60
   rotate_speed: 75
+  searching_rotate_speed: 75
+  chasing_rotate_speed: 200
   sprite_ref: {fileID: 6785655081011205386}
   sight_visual_ref: {fileID: 6785655081819555558}
 --- !u!1 &6785655081011205384
@@ -307,8 +313,8 @@ MonoBehaviour:
   m_LocalBounds:
     m_Center: {x: 0, y: -0.00000011920929, z: 0}
     m_Extent: {x: 0.9985302, y: 0.99853027, z: 0}
-  m_PointLightInnerAngle: 60
-  m_PointLightOuterAngle: 60
+  m_PointLightInnerAngle: 90
+  m_PointLightOuterAngle: 90
   m_PointLightInnerRadius: 4.8
   m_PointLightOuterRadius: 4.8
   m_ShapeLightParametricSides: 5
@@ -347,7 +353,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6785655082316724408}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0.1}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
