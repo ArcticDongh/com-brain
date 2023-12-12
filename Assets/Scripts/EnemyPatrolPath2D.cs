@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class EnemyPatrolPath2D : EnemyBase
 {
+    [Header("EnemyPatrol")]
     public float path_node_close_enough_length = 0.05f;
     public float patrol_speed = 2f;
 
