@@ -16,3 +16,15 @@ ver-preview2-fix1
 ver-preview2-fix2
 现在敌人的警戒值上升速度和下降速度均可被修改。
 设置为玩家离敌人越近警戒值上升越快。
+
+2023年12月12日
+ver-preview3
+调整了地图布局
+添加草丛（Hideout基类）。能阻挡敌人视线和玩家视线。
+添加UniqueName框架。用于根据名称设置和查找对象。主要用于静态对象和UI对象。
+重做武器挂载方式，现使用PlayerControl::CreateWeaponByName加载/Resources/Prefabs/下的预制体。
+武器挂载点（mount），0表示左键，1表示右键，暂未实现更多挂载点。
+添加WeaponMount类用以兼容多种武器的Script。
+为武器添加使用次数限制的选项。同时为武器UI添加剩余次数显示。
+可设置武器名称并显示在武器UI上。
+添加DebugUI菜单。

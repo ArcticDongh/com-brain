@@ -302,7 +302,7 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
         }
         // 检查路径
         var t_range = Mathf.Min(sight_range, delta.magnitude);
-        var ray_result = Physics2D.Raycast(transform.position, delta, t_range, LayerMask.GetMask("Terrain"));
+        var ray_result = Physics2D.Raycast(transform.position, delta, t_range, LayerMask.GetMask("Terrain") | LayerMask.GetMask("Hideout"));    // 仅检测地形（墙壁等）以及藏身处（草丛等）
     
         Debug.DrawLine(transform.position, transform.position + delta.normalized * t_range, Color.cyan);
 
@@ -310,6 +310,8 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
         {
             return true;
         }
+
+        Debug.DrawLine(ray_result.point, transform.position + delta.normalized * t_range, Color.red);
 
         return false;
     }

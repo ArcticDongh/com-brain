@@ -19,7 +19,7 @@ public class WeaponLongrangeBase : WeaponBase
             return (Time.time - timestamp) > time;
         }
     }
-
+    [Header("WeaponLongrange")]
     public GameObject projection_prefab;
     public float projection_speed = 2f;
     public float projection_lasting_time = 1f;
