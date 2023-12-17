@@ -1,3 +1,4 @@
+using FW;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -5,14 +6,23 @@ using UnityEngine.Events;
 using UnityEngine.Rendering.Universal;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class PlayerControl : UniqueMono<PlayerControl>
+public class PlayerControl : UniqueMono<PlayerControl>, FW.ISoundListener, FW.ISoundSender
 {
-    public float acceleration = 0.45f;
+    public float sound_range = 2.0f;//发出声音范围
     public float sticky_rate = 0.9f;
     public float sight_range = 6.4f;
     public float speed = 0.2f;
+    public float sneak_speed = 2f;
+    public float normal_speed = 5f;
     private bool debug_show = true;
     public bool DebugShow { get { return debug_show; } }
+
+    public GameObject SoundGameObject => gameObject;
+
+    public SoundType SoundSourceType => SoundType.PLAYER;
+
+    public float SoundRange => sound_range;
+
     private Rigidbody2D rb;
     private Light2D playerSight;
 
@@ -74,6 +84,15 @@ public class PlayerControl : UniqueMono<PlayerControl>
         }
 
         var direction = GetInputAxis();
+        //潜行控制
+        if(Input.GetKey(KeyCode.LeftShift))
+        {
+            speed = sneak_speed;
+        }
+        else
+        {
+            speed = normal_speed;
+        }
 
         
         if (direction.magnitude > 1)
@@ -105,6 +124,7 @@ public class PlayerControl : UniqueMono<PlayerControl>
 
         // 处理视线
         ProcessSight();
+        SendSound();
     }
     // 处理视线，检查每一个敌人（敌人使用静态变量Enemies存贮，初始化时自动注册）
     // 若敌人在自身视野范围内并且射线检测路径上没有terrain（墙壁等），则视作玩家发现了该敌人，显示该敌人。
@@ -208,5 +228,25 @@ public class PlayerControl : UniqueMono<PlayerControl>
     public void DebugCreateWeaponTo1(string name)
     {
         CreateWeaponByName(name, 1);
+    }
+
+    public void OnHearSound(ISoundSender source)
+    {
+        //播放声音
+    //    throw new System.NotImplementedException();
+    }
+
+    public void SendSound()
+    {
+        for(int i=0;i< EnemyBase.Enemies.Count;i++)
+        {
+            if ((EnemyBase.Enemies[i].transform.position - transform.position).magnitude < sound_range*speed/normal_speed)//如果敌人和玩家的距离小于玩家的发声音范围，则敌人听到声音
+            {
+                EnemyBase.Enemies[i].OnHearSound(this);
+            }
+                
+        }
+        
+//        throw new System.NotImplementedException();
     }
 }
