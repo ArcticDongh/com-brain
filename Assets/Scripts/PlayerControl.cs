@@ -8,13 +8,14 @@ using UnityEngine.Rendering.Universal;
 [RequireComponent(typeof(Rigidbody2D))]
 public class PlayerControl : UniqueMono<PlayerControl>, FW.ISoundListener, FW.ISoundSender
 {
-    public float sound_range = 2.0f;//发出声音范围
+    public float sound_range = 6.0f;//发出声音范围
     public float sticky_rate = 0.9f;
     public float sight_range = 6.4f;
     public float speed = 0.2f;
     public float sneak_speed = 2f;
     public float normal_speed = 5f;
     private bool debug_show = true;
+
     public bool DebugShow { get { return debug_show; } }
 
     public GameObject SoundGameObject => gameObject;
@@ -124,7 +125,11 @@ public class PlayerControl : UniqueMono<PlayerControl>, FW.ISoundListener, FW.IS
 
         // 处理视线
         ProcessSight();
-        SendSound();
+
+        if (speed >= sneak_speed/2)
+        {
+            SendSound();
+        }
     }
     // 处理视线，检查每一个敌人（敌人使用静态变量Enemies存贮，初始化时自动注册）
     // 若敌人在自身视野范围内并且射线检测路径上没有terrain（墙壁等），则视作玩家发现了该敌人，显示该敌人。
@@ -232,6 +237,9 @@ public class PlayerControl : UniqueMono<PlayerControl>, FW.ISoundListener, FW.IS
 
     public void OnHearSound(ISoundSender source)
     {
+        
+        Debug.DrawLine(source.SoundGameObject.transform.position, transform.position);
+        print("hear voice from enemy: "+source.SoundGameObject.name);
         //播放声音
     //    throw new System.NotImplementedException();
     }

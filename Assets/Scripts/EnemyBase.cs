@@ -9,7 +9,7 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable, FW.ISoundListener, FW.
 {
     public enum AIMode { IDLE,SUSPECT, ALARM, DISABLED, PRESERVED1, PRESERVED2, PRESERVED3 };
 
-    public float sound_range = 8.0f;
+    public float sound_range = 10.0f;
     public float sight_range = 4.8f;
     public float sight_angle = 30f;
  //   public float acceleration = 0.45f;
@@ -18,7 +18,8 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable, FW.ISoundListener, FW.
 
     public float searching_speed = 1f;  //搜查时速度
     public float chasing_speed = 5f;    //追击时速度
-
+    public float step_time = 0.5f;//每一步的时间
+    public float step_progress = 0;
     public float searching_time = 5.0f;//搜查时间
     public float searching_progress = 0f;
     public float sight_progress_up_speed = 1.0f;//警戒值上升速度
@@ -84,7 +85,16 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable, FW.ISoundListener, FW.
     {
         AIBehavior();
         ProcessSight();
-        SendSound();
+        
+            step_progress += Time.fixedDeltaTime*speed;
+        
+        
+        if(step_progress>=step_time)
+        {
+            SendSound();
+            step_progress = 0;
+        }
+        
         // 提示敌人是否能看见玩家
         // IsSeePlayer();
 
@@ -183,6 +193,7 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable, FW.ISoundListener, FW.
 
     protected virtual void AIBehaviorModeIdle()
     {
+        speed = 0;
         searching_progress = searching_time;
         ai_move_direction = Vector2.zero;
     }
@@ -193,7 +204,6 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable, FW.ISoundListener, FW.
         {
             searching_progress -= Time.deltaTime;
         }
-        
         speed = searching_speed;
         rotate_speed = searching_rotate_speed;
         ai_move_direction = ShakeFix((ai_last_spot - (Vector2)transform.position)).normalized;
