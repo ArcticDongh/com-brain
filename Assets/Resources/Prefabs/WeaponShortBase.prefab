@@ -194,7 +194,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   do_destroy_on_wall: 0
-  do_pierce_enemy: 1
+  do_pierce: 1
+  do_kill_enemy: 1
+  do_kill_player: 0
 --- !u!50 &1647582025952649076
 Rigidbody2D:
   serializedVersion: 4

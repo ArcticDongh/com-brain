@@ -26,6 +26,8 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
     public SpriteRenderer sprite_ref;
     public GameObject sight_visual_ref;
 
+    public UnityEngine.Events.UnityEvent trigger_weapon;
+
     protected AIMode ai_mode;
     protected bool is_alive = true;
     protected float ai_sight_progress = 0f;
@@ -44,6 +46,10 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
     private static readonly Color color_suspect = new(0.4f, 0.34f, 0);
     private static readonly Color color_common = new(0, 0.26f, 0.4f);
 
+    private bool cacheSeePlayer;
+    private bool useCacheSeePlayer;
+
+    // private static GameObject enemyAttackPrefab = FW.Utilities.LoadPrefab("WeaponProjectionEnemy");
 
     protected virtual void Awake()
     {
@@ -79,11 +85,13 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
 
     private void FixedUpdate()
     {
+        useCacheSeePlayer = false;
+
         AIBehavior();
         ProcessSight();
 
         // 提示敌人是否能看见玩家
-        // IsSeePlayer();
+        // IsSeePlayerCached();
 
         // 移动
 
@@ -148,7 +156,7 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
 
     protected void AIBehaviorSight()
     {
-        if (!IsSeePlayer())
+        if (!IsSeePlayerCached())
         {
             ai_sight_progress = Mathf.Max(ai_sight_progress - sight_progress_down_speed, 0);
             // 警戒等级降低
@@ -205,6 +213,11 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
         speed = chasing_speed;
         rotate_speed = chasing_rotate_speed;
         ai_move_direction = ShakeFix((ai_last_spot - (Vector2)transform.position)).normalized;
+
+        if (IsSeePlayerCached())
+        {
+            trigger_weapon.Invoke();
+        }
     }
     // AI行为应当写在这里
     private void AIBehavior()
@@ -278,11 +291,24 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
         var v = target - transform.position;
         return Mathf.Atan2(v.y, v.x) * Mathf.Rad2Deg;
     }
+
+    // 功能与IsSeePlayer一致，添加了缓存以避免重复执行射线检测。
+    public bool IsSeePlayerCached()
+    {
+        if (!useCacheSeePlayer)
+        {
+            cacheSeePlayer = IsSeePlayer();
+            useCacheSeePlayer = true;
+        }
+            
+        return cacheSeePlayer;
+    }
+
     // 检查是否能看到玩家，可能有1帧的延迟
     // 条件：敌人存活，与玩家的距离在视野范围内，玩家在视野角度内，射线检测路径上没有terrian（墙壁等）
     public bool IsSeePlayer()
     {
-        if (!is_alive)
+        if (!is_alive || !PlayerControl.Instance.IsAlive)
         {
             return false;
         }
@@ -342,16 +368,43 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
         }
         return rawFloat;
     }
+
+    private class SaveData : Object
+    {
+        // 空间属性
+        public Vector3 position;
+        public Quaternion rotation;
+        public Vector2 velocity;
+        // 内部属性
+        public bool isAlive;
+    }
     // 接口函数。
     // 通常子类需要重写这两个函数以适配新增属性。
     public virtual Object Serialize()
     {
-        throw new System.NotImplementedException();
+        var data = new SaveData
+        {
+            position = transform.position,
+            rotation = transform.rotation,
+            velocity = rb.velocity,
+            isAlive = is_alive,
+        };
+
+        return data;
     }
 
     public virtual void Deserialize(Object saved_data)
     {
-        throw new System.NotImplementedException();
+        SaveData data = saved_data as SaveData;
+        if (data is null)
+        {
+            Debug.LogError("拆箱失败：" + saved_data.ToString());
+        }
+
+        transform.SetPositionAndRotation(data.position, data.rotation);
+        rb.velocity = data.velocity;
+
+        if (!is_alive && data.isAlive) Resurrect();
     }
 
     public void SetSightVisualColor(Color color)
@@ -370,5 +423,10 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
         light.pointLightOuterAngle = angle;
         light.pointLightInnerAngle = angle;
         light.pointLightOuterAngle = angle;     // 三次赋值，防止可能的数值clamp
+    }
+
+    public void Resurrect()
+    {
+        ;//
     }
 }

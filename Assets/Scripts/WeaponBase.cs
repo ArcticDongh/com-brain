@@ -70,12 +70,18 @@ public class WeaponBase : MonoBehaviour
     // 拓展武器时应当重写这两个函数以适应武器外观和功能
     protected virtual void EnableWeapon()
     {
-        weapon_appearance.SetActive(true);
+        if (weapon_appearance is not null)
+        {
+            weapon_appearance.SetActive(true);
+        }
     }
 
     protected virtual void DisableWeapon()
     {
-        weapon_appearance.SetActive(false);
+        if (weapon_appearance is not null)
+        {
+            weapon_appearance.SetActive(false);
+        }
     }
 
     public void OnWeaponTriggered()

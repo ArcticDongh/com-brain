@@ -58,6 +58,17 @@ PrefabInstance:
     m_RemovedComponents:
     - {fileID: 6785655080850680945, guid: eaa0449c04eeece4cbc7d8f3e33b3e59, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: eaa0449c04eeece4cbc7d8f3e33b3e59, type: 3}
+--- !u!114 &1479343104790534140 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 7239181982873861357, guid: eaa0449c04eeece4cbc7d8f3e33b3e59, type: 3}
+  m_PrefabInstance: {fileID: 8138307029198187281}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f231798ff1af98744a9e56ed78755021, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &3376132124242472439 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 6785655081819555558, guid: eaa0449c04eeece4cbc7d8f3e33b3e59, type: 3}
@@ -87,16 +98,32 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   sight_range: 4.8
   sight_angle: 30
-  acceleration: 0.45
   sticky_rate: 0.9
   speed: 3
   searching_speed: 1
   chasing_speed: 5
+  sight_progress_up_speed: 1
+  sight_progress_down_speed: 0.3
   ai_sight_stagesize: 60
   rotate_speed: 75
   searching_rotate_speed: 75
   chasing_rotate_speed: 200
   sprite_ref: {fileID: 3376132125170564635}
   sight_visual_ref: {fileID: 3376132124242472439}
+  trigger_weapon:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 1479343104790534140}
+        m_TargetAssemblyTypeName: WeaponBase, Assembly-CSharp
+        m_MethodName: OnWeaponTriggered
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
   path_node_close_enough_length: 0.05
   patrol_speed: 2
