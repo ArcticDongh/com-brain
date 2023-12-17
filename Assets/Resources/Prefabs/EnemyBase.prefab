@@ -118,14 +118,26 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bb0e75dc71d62bc4ba334aab48f54043, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  sound_range: 10
   sight_range: 4.8
   sight_angle: 30
-  acceleration: 0.45
   sticky_rate: 0.9
+  speed: 3
+  searching_speed: 1
+  chasing_speed: 5
+  step_time: 0.5
+  step_progress: 0
+  searching_time: 5
+  searching_progress: 0
+  sight_progress_up_speed: 1
+  sight_progress_down_speed: 0.3
   ai_sight_stagesize: 60
   rotate_speed: 75
+  searching_rotate_speed: 75
+  chasing_rotate_speed: 200
   sprite_ref: {fileID: 6785655081011205386}
   sight_visual_ref: {fileID: 6785655081819555558}
+  enemy_step: {fileID: 8300000, guid: 683fdc46a9c8e2b409990732711ec687, type: 3}
 --- !u!1 &6785655081011205384
 GameObject:
   m_ObjectHideFlags: 0

@@ -240,8 +240,8 @@ public class PlayerControl : UniqueMono<PlayerControl>, FW.ISoundListener, FW.IS
         
         Debug.DrawLine(source.SoundGameObject.transform.position, transform.position);
         print("hear voice from enemy: "+source.SoundGameObject.name);
-        //播放声音
-    //    throw new System.NotImplementedException();
+        
+        //    throw new System.NotImplementedException();
     }
 
     public void SendSound()

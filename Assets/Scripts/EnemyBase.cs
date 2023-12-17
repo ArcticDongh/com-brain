@@ -18,7 +18,7 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable, FW.ISoundListener, FW.
 
     public float searching_speed = 1f;  //搜查时速度
     public float chasing_speed = 5f;    //追击时速度
-    public float step_time = 0.5f;//每一步的时间
+    public float step_time = 1f;//每一步的时间
     public float step_progress = 0;
     public float searching_time = 5.0f;//搜查时间
     public float searching_progress = 0f;
@@ -30,6 +30,7 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable, FW.ISoundListener, FW.
     public float chasing_rotate_speed = 200f;//追击时旋转速度
     public SpriteRenderer sprite_ref;
     public GameObject sight_visual_ref;
+    public AudioClip enemy_step;
 
     protected AIMode ai_mode;
     protected bool is_alive = true;
@@ -401,6 +402,7 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable, FW.ISoundListener, FW.
     {
         ai_last_spot = (Vector2)source.SoundGameObject.transform.position;
         SuspectProgressUp();
+
     }
 
     public void SendSound()
@@ -408,7 +410,14 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable, FW.ISoundListener, FW.
         if ((PlayerControl.Instance.transform.position - transform.position).magnitude < SoundRange)//如果敌人和玩家的距离小于敌人的发声音范围，则玩家听到声音
         {
             PlayerControl.Instance.OnHearSound(this);
+            //播放声音
+            if(enemy_step!=null)
+            {
+                AudioManager.instance.AudioPlay(enemy_step);
+            }
+
+            //enemy_step需声明后关联
         }
-        
+
     }
 }
