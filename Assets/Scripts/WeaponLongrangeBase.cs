@@ -23,13 +23,17 @@ public class WeaponLongrangeBase : WeaponBase
     public GameObject projection_prefab;
     public float projection_speed = 2f;
     public float projection_lasting_time = 1f;
-    public bool do_inherit_player_velocity = true;
+    public bool do_inherit_source_velocity = true;
 
     private readonly List<ProjectionData> projection_datas = new();
 
     protected override void EnableWeapon()
     {
         base.EnableWeapon();    // display
+
+        Shoot();
+
+        /*
         // สตภýปฏ
         var inst = Instantiate(projection_prefab);
         inst.transform.SetPositionAndRotation(transform.position, PlayerControl.Instance.transform.rotation);
@@ -41,6 +45,34 @@ public class WeaponLongrangeBase : WeaponBase
         if (do_inherit_player_velocity)
         {
             rb.velocity += PlayerControl.Instance.GetComponent<Rigidbody2D>().velocity;
+        }
+
+        projection_datas.Add(new ProjectionData() { projection_ref = inst });
+        */
+    }
+
+    protected virtual void Shoot()
+    {
+        ShootTowards(PlayerControl.Instance.transform, FW.Utilities.GetMouseWorldCoordinate());
+    }
+
+    protected void ShootTowards(Transform source, Vector2 target)
+    {
+        var inst = Instantiate(projection_prefab);
+        inst.transform.position = source.position;
+        var rb = inst.GetComponent<Rigidbody2D>();
+        var delta = target - (Vector2)source.position;
+        rb.velocity = delta.normalized * projection_speed;
+
+        var angle = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg;
+        rb.rotation = angle;
+
+        if (do_inherit_source_velocity)
+        {
+            if (source.TryGetComponent<Rigidbody2D>(out Rigidbody2D source_rb))
+            {
+                rb.velocity += source_rb.velocity;
+            }
         }
 
         projection_datas.Add(new ProjectionData() { projection_ref = inst });
