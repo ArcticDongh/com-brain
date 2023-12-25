@@ -126,7 +126,7 @@ public class PlayerControl : UniqueMono<PlayerControl>, FW.ISoundListener, FW.IS
         // 处理视线
         ProcessSight();
 
-        if (speed >= sneak_speed/2)
+        if (rb.velocity.magnitude >= sneak_speed/2)
         {
             SendSound();
         }
@@ -239,13 +239,14 @@ public class PlayerControl : UniqueMono<PlayerControl>, FW.ISoundListener, FW.IS
     {
         
         Debug.DrawLine(source.SoundGameObject.transform.position, transform.position);
-        print("hear voice from enemy: "+source.SoundGameObject.name);
+//        print("hear voice from enemy: "+source.SoundGameObject.name);
         
         //    throw new System.NotImplementedException();
     }
 
     public void SendSound()
     {
+        print("sound");
         for(int i=0;i< EnemyBase.Enemies.Count;i++)
         {
             if ((EnemyBase.Enemies[i].transform.position - transform.position).magnitude < sound_range*speed/normal_speed)//如果敌人和玩家的距离小于玩家的发声音范围，则敌人听到声音
