@@ -32,9 +32,9 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable, FW.ISoundListener, FW.
     public GameObject sight_visual_ref;
     public AudioClip enemy_step;
 
-    protected AIMode ai_mode;
+    public AIMode ai_mode;
     protected bool is_alive = true;
-    protected float ai_sight_progress = 0f;
+    public float ai_sight_progress = 0f;
     protected Vector2 ai_last_spot;
     protected Vector2 ai_move_direction;
     protected float ai_face_degree;   // AI控制的目标朝向（rotation）
@@ -173,7 +173,11 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable, FW.ISoundListener, FW.
         if (!IsSeePlayer())
         {
             if(searching_progress<=0||AAIMode!=AIMode.SUSPECT)//如果没在搜索状态就减警戒
-            ai_sight_progress = Mathf.Max(ai_sight_progress - sight_progress_down_speed, 0);
+            {
+                ai_sight_progress = Mathf.Max(ai_sight_progress - sight_progress_down_speed, 0);
+
+            }
+            
             // 警戒等级降低
             if (ai_sight_progress > 0) return;
             if(AAIMode>0)
@@ -201,6 +205,7 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable, FW.ISoundListener, FW.
 
     protected virtual void AIBehaviorModeSuspect()
     {
+        print("suspect");
         if(searching_progress>=0)
         {
             searching_progress -= Time.deltaTime;
