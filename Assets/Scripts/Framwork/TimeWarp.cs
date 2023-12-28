@@ -24,6 +24,8 @@ namespace FW
                 container = new();
             }
 
+            public float TimeStamp { get => time_stamp; }
+
             public void Add(ISerializable obj)
             {
                 container.Add(obj.Serialize());
@@ -63,14 +65,17 @@ namespace FW
         public static void Save()
         {
             var node = new TimeNode(Time.time); // 后续要换成自定义时间
+            Debug.Log("Saving at:" + node.TimeStamp);
             foreach (var item in managed)
             {
                 node.Add(item);
             }
+            nodes.Add(node);
         }
 
         private static void Load(TimeNode node)
         {
+            Debug.Log("Load with:" + node.TimeStamp);
             foreach (var item in managed)
             {
                 node.Recover(item);
@@ -79,6 +84,16 @@ namespace FW
 
         public static void Load(int index)
         {
+            if (nodes.Count <= 0)
+            {
+                Debug.LogWarning("No nodes to be loaded.");
+                return;
+            }
+            
+            if (index < 0)
+            {
+                index %= nodes.Count;
+            }
             Load(nodes[index]);
             RemoveAllNodesAfter(index); // 不一定要移除
         }

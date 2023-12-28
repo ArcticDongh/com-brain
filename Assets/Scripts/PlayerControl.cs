@@ -5,7 +5,7 @@ using UnityEngine.Events;
 using UnityEngine.Rendering.Universal;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class PlayerControl : UniqueMono<PlayerControl>
+public class PlayerControl : UniqueMono<PlayerControl>, FW.ISerializable
 {
     public float acceleration = 0.45f;
     public float sticky_rate = 0.9f;
@@ -15,19 +15,32 @@ public class PlayerControl : UniqueMono<PlayerControl>
     public bool DebugShow { get { return debug_show; } }
     private Rigidbody2D rb;
     private Light2D playerSight;
+    private bool isAlive = true;
 
     private readonly UnityEvent trigger_weapon_primary = new();
     private readonly UnityEvent trigger_weapon_secondary = new();
     private readonly HashSet<Rigidbody2D> ignored_hideouts = new();  // 使用rigidbody2D确定一个对象
     private readonly WeaponBase[] weapons = new WeaponBase[2];
 
+    private ParticleSystem particle_blood_ref;
+    private SpriteRenderer sr;
+
+    [Header("Debug")]
+    public bool debugGodmod = false;
+
+    public bool IsAlive { get => isAlive; }
+
     // Start is called before the first frame update
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         playerSight = transform.Find("Sight").GetComponent<Light2D>();
+        particle_blood_ref = GetComponentInChildren<ParticleSystem>();
+        sr = GetComponent<SpriteRenderer>();
 
         TestWeapon();
+
+        FW.TimelineManager.Register(this);
     }
 
     // Update is called once per frame
@@ -46,8 +59,7 @@ public class PlayerControl : UniqueMono<PlayerControl>
         }
     }
 
-    // 物理帧
-    private void FixedUpdate()
+    private void PlayerTimeControl()
     {
         // 时间流速控制
         float ts = -1f;
@@ -72,10 +84,23 @@ public class PlayerControl : UniqueMono<PlayerControl>
         {
             Time.timeScale = ts;
         }
+        /*
+        if (Input.GetKey(KeyCode.K))
+        {
+            FW.TimelineManager.Save();
+        }
+        if (Input.GetKey(KeyCode.L))
+        {
+            FW.TimelineManager.Load(-1);
+        }
+        */
+    }
 
+    private void PlayerInputAndControl()
+    {
         var direction = GetInputAxis();
 
-        
+
         if (direction.magnitude > 1)
         {
             direction.Normalize();  // 防止斜向加速移动
@@ -86,7 +111,7 @@ public class PlayerControl : UniqueMono<PlayerControl>
         rb.velocity += direction * acceleration;
         */
 
-        rb.velocity = direction* speed;//尝试放弃加速度，更好控制
+        rb.velocity = direction * speed;//尝试放弃加速度，更好控制
         rb.velocity *= sticky_rate;
         // 转向到鼠标位置，朝向以上方向为准（Vector2.UP）
         var delta = FW.Utilities.GetMouseWorldCoordinate() - transform.position;
@@ -102,7 +127,23 @@ public class PlayerControl : UniqueMono<PlayerControl>
         {
             trigger_weapon_secondary.Invoke();
         }
+    }
 
+    // 物理帧
+    private void FixedUpdate()
+    {
+        if (isAlive)
+        {
+            // 玩家控制，主要是输入。
+            PlayerInputAndControl();
+        }
+        else
+        {
+            // 地板粘粘的。防止滑动。
+            rb.velocity *= sticky_rate;
+        }
+
+        PlayerTimeControl();
         // 处理视线
         ProcessSight();
     }
@@ -129,6 +170,7 @@ public class PlayerControl : UniqueMono<PlayerControl>
             int first_collide_index = -1;
             for (int i = 0; i < ray_result.Length; i++)
             {
+                // Debug.Log("col");
                 // Debug.Log(ray_result[i].collider.name);
                 if (ray_result[i].collider is null) continue;   // 跳过空对象（应该不会有）
                 if (ignored_hideouts.Contains(ray_result[i].rigidbody)) continue;    // 跳过玩家所在的hideout
@@ -161,13 +203,15 @@ public class PlayerControl : UniqueMono<PlayerControl>
     // 这里使用rigidbody2d唯一指定草丛对象。
     private void OnTriggerEnter2D(Collider2D collision)
     {
-        // Debug.Log("entering hideout:" + collision.name);
+        if (!collision.CompareTag("Hideout")) return;
+        Debug.Log("entering hideout:" + collision.name);
         ignored_hideouts.Add(collision.attachedRigidbody);
     }
 
     private void OnTriggerExit2D(Collider2D collision)
     {
-        // Debug.Log("exiting hideout:" + collision.name);
+        if (!collision.CompareTag("Hideout")) return;
+        Debug.Log("exiting hideout:" + collision.name);
         ignored_hideouts.Remove(collision.attachedRigidbody);
     }
     // 尝试在当前transform下创建武器对象，返回是否成功。
@@ -208,5 +252,66 @@ public class PlayerControl : UniqueMono<PlayerControl>
     public void DebugCreateWeaponTo1(string name)
     {
         CreateWeaponByName(name, 1);
+    }
+    // 玩家似了
+    public void OnKilled()
+    {
+        if (!isAlive || debugGodmod) return;
+
+        Debug.Log("player killed");
+        particle_blood_ref.Play();
+        sr.color = Color.black;
+
+        isAlive = false;
+    }
+    // 玩家复活！
+    public void Resurrect()
+    {
+        if (isAlive) return;
+
+        Debug.Log("player resurrect");
+
+        particle_blood_ref.Stop();
+        particle_blood_ref.Clear();
+        sr.color = Color.white;
+
+        isAlive = true;
+    }
+
+    private class SaveData : Object
+    {
+        // 空间属性
+        public Vector3 position;
+        public Quaternion rotation;
+        public Vector2 velocity;
+        // 内部属性
+        public bool isAlive;
+    }
+
+    public Object Serialize()
+    {
+        var data = new SaveData
+        {
+            position = transform.position,
+            rotation = transform.rotation,
+            velocity = rb.velocity,
+            isAlive = isAlive,
+        };
+
+        return data;
+    }
+
+    public void Deserialize(Object saved_data)
+    {
+        SaveData data = saved_data as SaveData;
+        if (data is null)
+        {
+            Debug.LogError("拆箱失败：" + saved_data.ToString());
+        }
+
+        transform.SetPositionAndRotation(data.position, data.rotation);
+        rb.velocity = data.velocity;
+
+        if (!isAlive && data.isAlive) Resurrect();
     }
 }
