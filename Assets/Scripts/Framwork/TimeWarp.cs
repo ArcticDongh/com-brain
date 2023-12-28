@@ -17,6 +17,7 @@ namespace FW
         {
             private float time_stamp;
             private List<Object> container; // 作用等同于队列
+            private List<Object>.Enumerator iter;
 
             public TimeNode(float time_now)
             {
@@ -33,9 +34,16 @@ namespace FW
 
             public void Recover(ISerializable obj)
             {
-                var data = container[0];
-                container.RemoveAt(0);
+                iter.MoveNext();
+                var data = iter.Current;
+                // var data = container[0];
+                // container.RemoveAt(0);
                 obj.Deserialize(data);
+            }
+
+            public void StartRecover()
+            {
+                iter = container.GetEnumerator();
             }
         }
 
@@ -76,6 +84,7 @@ namespace FW
         private static void Load(TimeNode node)
         {
             Debug.Log("Load with:" + node.TimeStamp);
+            node.StartRecover();
             foreach (var item in managed)
             {
                 node.Recover(item);
@@ -89,11 +98,20 @@ namespace FW
                 Debug.LogWarning("No nodes to be loaded.");
                 return;
             }
-            
+            Debug.Log(string.Format("{0:d} mod {1:d}", index, nodes.Count));
             if (index < 0)
             {
-                index %= nodes.Count;
+                if (nodes.Count == -index)
+                {
+                    index = 0;
+                }
+                else
+                {
+                    // index %= nodes.Count;
+                    index = nodes.Count - (-index % nodes.Count);
+                }
             }
+            Debug.Log("load from index:" + index.ToString());
             Load(nodes[index]);
             RemoveAllNodesAfter(index); // 不一定要移除
         }
@@ -101,11 +119,12 @@ namespace FW
         // 移除从索引index+1开始的node。
         private static void RemoveAllNodesAfter(int index)
         {
-            index = Mathf.Clamp(index + 1, 0, nodes.Count - 1);
-            var n = nodes.Count - index;
+            if (index >= nodes.Count - 1) return;
+            // index = Mathf.Clamp(index + 1, 0, nodes.Count - 1);
+            var n = nodes.Count - index - 1;
             if (n <= 0) return;
 
-            nodes.RemoveRange(index, n);
+            nodes.RemoveRange(index + 1, n);
         }
     }
 }

@@ -76,4 +76,43 @@ public class EnemyPatrolPath2D : EnemyBase
             ai_patrol_stay_timer = 0;
         }
     }
+
+    private class SaveData : Object
+    {
+        // Ñ²ÂßAIÊı¾İ
+        public float ai_patrol_stay_timer;
+        public bool ai_patrol_is_staying;
+        public int path_current_index;
+        // ¶îÍâÊı¾İ£¬¿¼ÂÇÓÃÓÚ¼Ì³Ğ
+        public Object extra_data;
+    }
+
+    public override Object Serialize()
+    {
+        var basedata = base.Serialize();
+        var data = new SaveData()
+        {
+            ai_patrol_stay_timer = ai_patrol_stay_timer,
+            ai_patrol_is_staying = ai_patrol_is_staying,
+            path_current_index = path2d.CurrentIndex,
+
+            extra_data = basedata,
+        };
+        return data;
+    }
+
+    public override void Deserialize(Object saved_data)
+    {
+        SaveData data = saved_data as SaveData;
+        if (data is null)
+        {
+            Debug.LogError("²ğÏäÊ§°Ü£º" + saved_data.ToString());
+        }
+
+        ai_patrol_stay_timer = data.ai_patrol_stay_timer;
+        ai_patrol_is_staying = data.ai_patrol_is_staying;
+        path2d.CurrentIndex = data.path_current_index;
+
+        base.Deserialize(data.extra_data);
+    }
 }

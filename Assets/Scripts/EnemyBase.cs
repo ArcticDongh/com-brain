@@ -4,10 +4,11 @@ using UnityEngine;
 using UnityEngine.Rendering.Universal;
 
 [RequireComponent(typeof(Rigidbody2D))]
-public class EnemyBase : MonoBehaviour, FW.ISerializable
+public class EnemyBase : MonoBehaviour, FW.ISerializable, FW.ISoundListener, FW.ISoundSender
 {
-    public enum AIMode { IDLE, PATROL, SUSPECT, ALARM, DISABLED, PRESERVED1, PRESERVED2, PRESERVED3 };
+    public enum AIMode { IDLE, SUSPECT, ALARM, DISABLED, PRESERVED1, PRESERVED2, PRESERVED3 };
 
+    public float sound_range = 8.0f;
     public float sight_range = 4.8f;
     public float sight_angle = 30f;
  //   public float acceleration = 0.45f;
@@ -16,7 +17,10 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
 
     public float searching_speed = 1f;  //搜查时速度
     public float chasing_speed = 5f;    //追击时速度
-
+    public float step_time = 1f;//每一步的时间
+    public float step_progress = 0;
+    public float searching_time = 5.0f;//搜查时间
+    public float searching_progress = 0f;
     public float sight_progress_up_speed = 1.0f;//警戒值上升速度
     public float sight_progress_down_speed = 0.3f;//警戒值下降速度
     public float ai_sight_stagesize = 60f;
@@ -25,6 +29,7 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
     public float chasing_rotate_speed = 200f;//追击时旋转速度
     public SpriteRenderer sprite_ref;
     public GameObject sight_visual_ref;
+    public AudioClip enemy_step;
 
     public UnityEngine.Events.UnityEvent trigger_weapon;
 
@@ -90,6 +95,14 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
         AIBehavior();
         ProcessSight();
 
+        step_progress += Time.fixedDeltaTime * speed;
+
+        if (step_progress >= step_time)
+        {
+            SendSound();
+            step_progress = 0;
+        }
+
         // 提示敌人是否能看见玩家
         // IsSeePlayerCached();
 
@@ -154,21 +167,26 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
         }
     }
 
+    public GameObject SoundGameObject => gameObject;
+
+    public float SoundRange => sound_range;
+
+    FW.SoundType FW.ISoundSender.SoundSourceType => FW.SoundType.ENEMY;
     protected void AIBehaviorSight()
     {
         if (!IsSeePlayerCached())
         {
-            ai_sight_progress = Mathf.Max(ai_sight_progress - sight_progress_down_speed, 0);
+            if (searching_progress <= 0 || AAIMode != AIMode.SUSPECT)//如果没在搜索状态就减警戒
+            {
+                ai_sight_progress = Mathf.Max(ai_sight_progress - sight_progress_down_speed, 0);
+
+            }
+
             // 警戒等级降低
             if (ai_sight_progress > 0) return;
-            if (AAIMode == AIMode.ALARM)
+            if (AAIMode > 0)
             {
-                AAIMode = AIMode.SUSPECT;
-                ai_sight_progress = ai_sight_stagesize;
-            }
-            else if (AAIMode == AIMode.SUSPECT)
-            {
-                AAIMode = AIMode.IDLE;
+                AAIMode--;
                 ai_sight_progress = ai_sight_stagesize;
             }
 
@@ -176,40 +194,30 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
         }
         //如果在视野范围内
         ai_last_spot = PlayerControl.Instance.transform.position;
-        var delta = ai_last_spot - (Vector2)transform.position;
-        sight_progress_up_speed = sight_range / Mathf.Abs(delta.magnitude);//距离越近警戒条进度越快
-        ai_sight_progress = Mathf.Min(ai_sight_progress + sight_progress_up_speed, ai_sight_stagesize);
-
-        ai_face_degree = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg - 90;    // 实体默认朝上，与默认方向右有90°的相位差。
-
-        if (ai_sight_progress < ai_sight_stagesize) return;
-        // 警戒等级提升
-        if (AAIMode == AIMode.IDLE)
-        {
-            AAIMode = AIMode.SUSPECT;
-            ai_sight_progress = 0;
-        }
-        else if (AAIMode == AIMode.SUSPECT)
-        {
-            AAIMode = AIMode.ALARM;
-            ai_sight_progress = 0;
-        }
-        
+        SuspectProgressUp();
     }
 
     protected virtual void AIBehaviorModeIdle()
     {
+        speed = 0;
+        searching_progress = searching_time;
         ai_move_direction = Vector2.zero;
     }
 
     protected virtual void AIBehaviorModeSuspect()
     {
+        print("suspect");
+        if (searching_progress >= 0)
+        {
+            searching_progress -= Time.deltaTime;
+        }
         speed = searching_speed;
         rotate_speed = searching_rotate_speed;
         ai_move_direction = ShakeFix((ai_last_spot - (Vector2)transform.position)).normalized;
     }
     protected virtual void AIBehaviorModeAlarm()
     {
+        searching_progress = searching_time;
         speed = chasing_speed;
         rotate_speed = chasing_rotate_speed;
         ai_move_direction = ShakeFix((ai_last_spot - (Vector2)transform.position)).normalized;
@@ -342,6 +350,27 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
 
         return false;
     }
+    public void SuspectProgressUp()
+    {
+        var delta = ai_last_spot - (Vector2)transform.position;
+        sight_progress_up_speed = sight_range / Mathf.Abs(delta.magnitude);//距离越近警戒条进度越快
+        ai_sight_progress = Mathf.Min(ai_sight_progress + sight_progress_up_speed, ai_sight_stagesize);
+
+        ai_face_degree = Mathf.Atan2(delta.y, delta.x) * Mathf.Rad2Deg - 90;    // 实体默认朝上，与默认方向右有90°的相位差。
+
+        if (ai_sight_progress < ai_sight_stagesize) return;
+        // 警戒等级提升
+        if (AAIMode == AIMode.IDLE)
+        {
+            AAIMode = AIMode.SUSPECT;
+            ai_sight_progress = 0;
+        }
+        else if (AAIMode == AIMode.SUSPECT)
+        {
+            AAIMode = AIMode.ALARM;
+            ai_sight_progress = 0;
+        }
+    }
     // 主动设置隐藏项目（包括敌人的贴图和可视化视线）
     // 用于玩家发现敌人和隐藏未发现的敌人
     public void SetShowEx(bool visible)
@@ -377,6 +406,12 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
         public Vector2 velocity;
         // 内部属性
         public bool isAlive;
+        // AI
+        public AIMode ai_mode;
+        public float ai_sight_progress;
+        public Vector2 ai_last_spot;
+        public Vector2 ai_move_direction;
+        public float ai_face_degree;
     }
     // 接口函数。
     // 通常子类需要重写这两个函数以适配新增属性。
@@ -388,6 +423,11 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
             rotation = transform.rotation,
             velocity = rb.velocity,
             isAlive = is_alive,
+            ai_mode = AAIMode,
+            ai_sight_progress = ai_sight_progress,
+            ai_last_spot = ai_last_spot,
+            ai_move_direction = ai_move_direction,
+            ai_face_degree = ai_face_degree,
         };
 
         return data;
@@ -405,6 +445,12 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
         rb.velocity = data.velocity;
 
         if (!is_alive && data.isAlive) Resurrect();
+
+        AAIMode = data.ai_mode;
+        ai_sight_progress = data.ai_sight_progress;
+        ai_last_spot = data.ai_last_spot;
+        ai_move_direction = data.ai_move_direction;
+        ai_face_degree = data.ai_face_degree;
     }
 
     public void SetSightVisualColor(Color color)
@@ -427,6 +473,47 @@ public class EnemyBase : MonoBehaviour, FW.ISerializable
 
     public void Resurrect()
     {
-        ;//
+        if (is_alive) return;
+
+        if (sprite_ref is not null)
+        {
+            sprite_ref.color = Color.white;
+        }
+
+        if (sight_visual_ref is not null)
+        {
+            sight_visual_ref.SetActive(true);
+        }
+
+        if (particle_blood_ref)
+        {
+            particle_blood_ref.Stop();
+            particle_blood_ref.Clear();
+        }
+
+        is_alive = true;
+    }
+
+    public void OnHearSound(FW.ISoundSender source)
+    {
+        ai_last_spot = (Vector2)source.SoundGameObject.transform.position;
+        SuspectProgressUp();
+
+    }
+
+    public void SendSound()
+    {
+        if ((PlayerControl.Instance.transform.position - transform.position).magnitude < SoundRange)//如果敌人和玩家的距离小于敌人的发声音范围，则玩家听到声音
+        {
+            PlayerControl.Instance.OnHearSound(this);
+            //播放声音
+            if (enemy_step != null)
+            {
+                AudioManager.instance.AudioPlay(enemy_step);
+            }
+
+            //enemy_step需声明后关联
+        }
+
     }
 }
